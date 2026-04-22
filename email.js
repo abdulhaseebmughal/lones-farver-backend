@@ -1,5 +1,9 @@
 const nodemailer = require("nodemailer");
 
+function isEmailConfigured() {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -17,6 +21,7 @@ function fmt(n) {
 }
 
 async function sendConfirmationEmail(order) {
+  if (!isEmailConfigured()) return { success: false, error: "Email not configured" };
   try {
     const transporter = createTransporter();
 
@@ -135,6 +140,7 @@ async function sendConfirmationEmail(order) {
 
 // ── Notify Lone when a contact form is submitted ──────────────────────────────
 async function sendContactNotification(contact) {
+  if (!isEmailConfigured()) return { success: false, error: "Email not configured" };
   try {
     const transporter = createTransporter();
     const html = `
@@ -182,6 +188,7 @@ async function sendContactNotification(contact) {
 
 // ── Newsletter welcome email ───────────────────────────────────────────────────
 async function sendNewsletterWelcome(email, lang = "DA") {
+  if (!isEmailConfigured()) return { success: false, error: "Email not configured" };
   try {
     const transporter = createTransporter();
     const DA = lang === "DA";

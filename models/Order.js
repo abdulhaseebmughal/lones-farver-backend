@@ -19,14 +19,15 @@ const orderSchema = new mongoose.Schema({
     zip:     { type: String, required: true },
     note:    { type: String, default: "" },
   },
-  items:     [orderItemSchema],
-  subtotal:  { type: Number, required: true },
-  shipping:  { type: Number, required: true },
-  total:     { type: Number, required: true },
-  status:    { type: String, enum: ["pending", "confirmed", "shipped", "cancelled"], default: "pending" },
-  emailSent: { type: Boolean, default: false },
+  items:    [orderItemSchema],
+  subtotal: { type: Number, required: true },
+  shipping: { type: Number, required: true },
+  total:    { type: Number, required: true },
+  status:   { type: String, enum: ["pending", "confirmed", "shipped", "cancelled"], default: "pending" },
+  emailSent:{ type: Boolean, default: false },
 }, { timestamps: true });
 
+// Auto-generate order number before save
 orderSchema.pre("save", async function (next) {
   if (!this.orderNumber) {
     const count = await mongoose.model("Order").countDocuments();

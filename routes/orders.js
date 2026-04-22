@@ -52,21 +52,32 @@ router.put("/:id/status", requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/orders/:id/confirm — admin confirms order + sends email
+// POST /api/orders/:id/confirm — admin confirms order (status only, no email)
 router.post("/:id/confirm", requireAuth, async (req, res) => {
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: "confirmed" },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ error: "Not found" });
+    res.json({ order, emailSent: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/orders/:id/send-email — admin manually sends confirmation email to customer
+router.post("/:id/send-email", requireAuth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ error: "Not found" });
-
-    // Update status
-    order.status = "confirmed";
-
-    // Send confirmation email
     const emailResult = await sendConfirmationEmail(order);
-    order.emailSent = emailResult.success;
-
-    await order.save();
-    res.json({ order, emailSent: emailResult.success, emailError: emailResult.error || null });
+    if (emailResult.success) {
+      order.emailSent = true;
+      await order.save();
+    }
+    res.json({ emailSent: emailResult.success, emailError: emailResult.error || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

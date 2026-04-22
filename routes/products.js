@@ -13,18 +13,21 @@ router.get("/", async (req, res) => {
   }
 });
 
-// PUT /api/products/:productId — admin only (update desc, price, imageKey)
+// PUT /api/products/:productId — admin only (update desc, price, imageKey — upserts if not in DB yet)
 router.put("/:productId", requireAuth, async (req, res) => {
   try {
-    const { desc, price, priceNum, imageKey } = req.body;
+    const { desc, price, priceNum, imageKey, name, category, size, tag } = req.body;
     const update = { desc, price, priceNum };
-    if (imageKey !== undefined) update.imageKey = imageKey;
+    if (imageKey  !== undefined) update.imageKey  = imageKey;
+    if (name      !== undefined) update.name      = name;
+    if (category  !== undefined) update.category  = category;
+    if (size      !== undefined) update.size      = size;
+    if (tag       !== undefined) update.tag       = tag;
     const product = await Product.findOneAndUpdate(
       { productId: req.params.productId },
-      update,
-      { new: true, runValidators: true }
+      { $set: update },
+      { new: true, upsert: true, runValidators: false }
     );
-    if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (err) {
     res.status(500).json({ error: err.message });
